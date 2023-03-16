@@ -14,9 +14,7 @@ type BlogPost struct {
 	ID         int       `gorm:"primary key" json:"id"`
 	Title      string    `json:"title"`
 	Body       string    `json:"body"`
-	// CategoryID int       `json:"category_id"`
 	Category   string    `json:"category" gorm:"foreignkey:CategoryID"`
-	// UserID     string    `json:"user_id"`
 	User       string    `json:"user" gorm:"foreignkey:UserID"`
 	CreatedAt  time.Time `json:"created_at"`
 	UpdatedAt  time.Time `json:"updated_at"`
@@ -93,7 +91,7 @@ func GetPostById(context *gin.Context) {
 		context.JSON(http.StatusBadRequest, gin.H{"error": "post not found"})
 		return
 	} else {
-		context.JSON(http.StatusOK, post)
+		context.JSON(http.StatusOK,  post)
 	}
 }
 
