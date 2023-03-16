@@ -14,9 +14,9 @@ type BlogPost struct {
 	ID         int       `gorm:"primary key" json:"id"`
 	Title      string    `json:"title"`
 	Body       string    `json:"body"`
-	CategoryID int       `json:"category_id"`
+	// CategoryID int       `json:"category_id"`
 	Category   string    `json:"category" gorm:"foreignkey:CategoryID"`
-	UserID     string    `json:"user_id"`
+	// UserID     string    `json:"user_id"`
 	User       string    `json:"user" gorm:"foreignkey:UserID"`
 	CreatedAt  time.Time `json:"created_at"`
 	UpdatedAt  time.Time `json:"updated_at"`
@@ -44,7 +44,7 @@ func main() {
 	if err != nil {
 		fmt.Println("Failed to connect the database")
 	}
-	// defer db.Close()
+	defer db.Close()
 
 	db.AutoMigrate(&BlogPost{})
 	db.AutoMigrate(&User{})
@@ -53,7 +53,7 @@ func main() {
 	router := gin.Default()
 
 	router.GET("/", HomePage)
-	router.GET("/posts", GetAllPosts)
+	router.GET("/posts/", GetAllPosts)
 	router.POST("/posts/", CreatePost)
 	router.GET("/posts/:id", GetPostById)
 	router.PUT("/posts/:id", UpdatePost)
@@ -89,9 +89,9 @@ func GetAllPosts(context *gin.Context) {
 func GetPostById(context *gin.Context) {
 	id := context.Param("id")
 	var post BlogPost
-	if err := db.Preload("User").Preload("Category").First(&post, id).Error; err != nil {
-		context.AbortWithStatus(http.StatusNotFound)
-		fmt.Println(err)
+	if err := db.Preload("User").Preload("Category").Where("id = ?", id).First(&post).Error; err != nil {
+		context.JSON(http.StatusBadRequest, gin.H{"error": "post not found"})
+		return
 	} else {
 		context.JSON(http.StatusOK, post)
 	}
