@@ -8,6 +8,6 @@ COPY . .
 
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=arm go build -o blogpost
 
-EXPOSE 4000
+EXPOSE 5000
 
 ENTRYPOINT [ "/app/blogpost" ]
