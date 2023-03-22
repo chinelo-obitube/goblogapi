@@ -11,13 +11,11 @@ import (
 )
 
 type BlogPost struct {
-	ID         int       `gorm:"primary key" json:"id"`
+	ID         int       ` json:"id" gorm:"primary key"`
 	Title      string    `json:"title"`
 	Body       string    `json:"body"`
-	CategoryID int       `json:"category_id"`
-	Category   string    `json:"category" gorm:"foreignkey:CategoryID"`
-	UserID     string    `json:"user_id"`
-	User       string    `json:"user" gorm:"foreignkey:UserID"`
+	Category Category       `json:"category_id" gorm:"foreignkey:ID"`
+	User    User   `json:"user_id" gorm:"foreignkey:ID"`
 	CreatedAt  time.Time `json:"created_at"`
 	UpdatedAt  time.Time `json:"updated_at"`
 }
@@ -39,6 +37,7 @@ type User struct {
 var db *gorm.DB
 var err error
 
+
 func main() {
 	db, _ = gorm.Open("sqlite3", "./blog.db")
 	if err != nil {
@@ -53,19 +52,19 @@ func main() {
 	router := gin.Default()
 
 	router.GET("/", HomePage)
-	router.GET("/posts/", GetAllPosts)
-	router.POST("/posts/", CreatePost)
+	router.GET("/posts", GetAllPosts)
+	router.POST("/posts", CreatePost)
 	router.GET("/posts/:id", GetPostById)
 	router.PUT("/posts/:id", UpdatePost)
 	router.DELETE("/posts/:id", DeletePost)
 
 	router.GET("/users", GetAllUsers)
-	router.POST("/users/", CreateUser)
+	router.POST("/users", CreateUser)
 	router.GET("/users/:id", GetUserById)
 	
 
 	router.GET("/categories", GetAllCategories)
-	router.POST("/categories/", CreateCategory)
+	router.POST("/categories", CreateCategory)
 	router.GET("/categories/:id", GetCategoryById)
 	
 
@@ -78,8 +77,8 @@ func HomePage(context *gin.Context) {
 
 func GetAllPosts(context *gin.Context) {
 	var posts []BlogPost
-	if err := db.Preload("User").Preload("Category").Find(&posts).Error; err != nil {
-		context.AbortWithStatus(http.StatusNotFound)
+	if err := db.Preload("Category").Find(&posts).Error; err != nil {
+		context.JSON(http.StatusNotFound, gin.H{"error": "no posts"})
 		fmt.Println(err)
 	} else {
 		context.JSON(http.StatusOK, posts)
@@ -89,7 +88,7 @@ func GetAllPosts(context *gin.Context) {
 func GetPostById(context *gin.Context) {
 	id := context.Param("id")
 	var post BlogPost
-	if err := db.Preload("User").Preload("Category").Where("id = ?", id).First(&post).Error; err != nil {
+	if err := db.Where("id = ?", id).First(&post).Error; err != nil {
 		context.JSON(http.StatusBadRequest, gin.H{"error": "post not found"})
 		return
 	} else {
