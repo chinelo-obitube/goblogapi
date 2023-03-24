@@ -11,13 +11,12 @@ import (
 )
 
 type BlogPost struct {
-	ID         int       ` json:"id" gorm:"primary key"`
-	Title      string    `json:"title"`
-	Body       string    `json:"body"`
-	Category Category       `json:"category_id" gorm:"foreignkey:ID"`
-	User    User   `json:"user_id" gorm:"foreignkey:ID"`
-	CreatedAt  time.Time `json:"created_at"`
-	UpdatedAt  time.Time `json:"updated_at"`
+	ID        int       ` json:"id" gorm:"primary key"`
+	Title     string    `json:"title"`
+	Body      string    `json:"body"`
+	Category  Category  `json:"category_id" gorm:"foreignkey:ID"`
+	User      User      `json:"user_id" gorm:"foreignkey:ID"`
+	Name      Category  `json:"name"`
 }
 
 type Category struct {
@@ -37,7 +36,6 @@ type User struct {
 var db *gorm.DB
 var err error
 
-
 func main() {
 	db, _ = gorm.Open("sqlite3", "./blog.db")
 	if err != nil {
@@ -53,6 +51,7 @@ func main() {
 
 	router.GET("/", HomePage)
 	router.GET("/posts", GetAllPosts)
+	router.GET("/posts/categories/:id", GetAllCategoriesPosts)
 	router.POST("/posts", CreatePost)
 	router.GET("/posts/:id", GetPostById)
 	router.PUT("/posts/:id", UpdatePost)
@@ -61,12 +60,10 @@ func main() {
 	router.GET("/users", GetAllUsers)
 	router.POST("/users", CreateUser)
 	router.GET("/users/:id", GetUserById)
-	
 
 	router.GET("/categories", GetAllCategories)
 	router.POST("/categories", CreateCategory)
 	router.GET("/categories/:id", GetCategoryById)
-	
 
 	router.Run(":4000")
 }
@@ -85,6 +82,16 @@ func GetAllPosts(context *gin.Context) {
 	}
 }
 
+func GetAllCategoriesPosts(context *gin.Context) {
+	var posts []BlogPost
+	if err := db.Preload("Category").Find(&posts).Error; err != nil {
+		context.JSON(http.StatusNotFound, gin.H{"error": "no posts"})
+		fmt.Println(err)
+	} else {
+		context.JSON(http.StatusOK, posts)
+	}
+}
+
 func GetPostById(context *gin.Context) {
 	id := context.Param("id")
 	var post BlogPost
@@ -92,7 +99,7 @@ func GetPostById(context *gin.Context) {
 		context.JSON(http.StatusBadRequest, gin.H{"error": "post not found"})
 		return
 	} else {
-		context.JSON(http.StatusOK,  post)
+		context.JSON(http.StatusOK, post)
 	}
 }
 
